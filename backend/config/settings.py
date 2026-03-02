@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 from datetime import timedelta
+import dj_database_url
 
 # Load environment variables
 load_dotenv()
@@ -76,29 +77,25 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# Database
-DB_ENGINE = os.getenv('DB_ENGINE', 'django.db.backends.sqlite3')
+# Database Configuration
+# For Render: Use DATABASE_URL environment variable
+# For local development: Use SQLite
 
-if DB_ENGINE == 'django.db.backends.sqlite3':
+if os.getenv('DATABASE_URL'):
+    # Production: PostgreSQL via DATABASE_URL (Render, Railway, Heroku, etc.)
     DATABASES = {
-        'default': {
-            'ENGINE': DB_ENGINE,
-            'NAME': BASE_DIR / os.getenv('DB_NAME', 'db.sqlite3'),
-        }
+        'default': dj_database_url.config(
+            default=os.getenv('DATABASE_URL'),
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
 else:
+    # Development: SQLite (local development only)
     DATABASES = {
         'default': {
-            'ENGINE': DB_ENGINE,
-            'NAME': os.getenv('DB_NAME', 'medsecure'),
-            'USER': os.getenv('DB_USER', 'root'),
-            'PASSWORD': os.getenv('DB_PASSWORD', ''),
-            'HOST': os.getenv('DB_HOST', 'localhost'),
-            'PORT': os.getenv('DB_PORT', '3306'),
-            'OPTIONS': {
-                'charset': 'utf8mb4',
-                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            }
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
 
